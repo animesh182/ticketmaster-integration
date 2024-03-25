@@ -83,10 +83,10 @@ def main(myTimer: func.TimerRequest) -> None:
                             events_list.append(event)
                     else:
                         break
-                    logging.info(f"events found {len(events_list)} for {location} till month {end_date_str}")
+                    # logging.info(f"events found {len(events_list)} for {location} till month {end_date_str}")
                     page_number += 1
                 else:
-                    print("Errors:", response.status_code)
+                    # print("Errors:", response.status_code)
                     break
         # Move to the next month
         current_date = next_month
@@ -127,7 +127,7 @@ def main(myTimer: func.TimerRequest) -> None:
             conn.commit()
             columns = [col[0] for col in cursor.description]
             all_cities = [dict(zip(columns, row)) for row in cursor.fetchall()]
-    logging.info(all_cities)
+    # logging.info(all_cities)
     unique_cities_ticketmaster= transformed_df['city'].unique()
 
     for city in unique_cities_ticketmaster:
@@ -138,7 +138,8 @@ def main(myTimer: func.TimerRequest) -> None:
                     conn.commit()
                     logging.info(f"city created {city}")
         else:
-            logging.info(f"City already exists: {city}")
+        #     logging.info(f"City already exists: {city}")
+            continue
 
 # # add category if not already in our database------------------------------------------------------------------------------------------
     all_categories_query = """SELECT "name" FROM public."Predictions_eventcategory";"""
@@ -157,9 +158,10 @@ def main(myTimer: func.TimerRequest) -> None:
                 with conn.cursor() as cursor:
                     cursor.execute('INSERT INTO public."Predictions_eventcategory" (id,name,description,created_at) VALUES (gen_random_uuid(),%s,null,%s)', [event_category,datetime.now()])
                     conn.commit()
-                    logging.info(f"{event_category} category created")
+                    # logging.info(f"{event_category} category created")
         else:
-            logging.info(f" Event category already exists:{event_category} ")
+        #     logging.info(f" Event category already exists:{event_category} ")
+            continue
 
 # #---add prediction location if not already in our database----------------------------------------------------------------------------
     all_locations_query = """SELECT name FROM public."Predictions_location";"""
@@ -193,8 +195,9 @@ def main(myTimer: func.TimerRequest) -> None:
                     else:
                         logging.info(f"City '{city_name}' does not exist. Skipping location creation for {location_name}")
                 else:
-                    logging.info(f"Location '{location_name}' already exists.")
-
+                #     logging.info(f"Location '{location_name}' already exists.")
+                    continue
+                        
     grouped_rows = transformed_df.groupby(['name', 'event_category', 'location', 'start_date'])
 
     with psycopg2.connect(**params) as conn:
@@ -208,14 +211,14 @@ def main(myTimer: func.TimerRequest) -> None:
                 cursor.execute('SELECT id FROM "Predictions_eventcategory" WHERE name = %s', [event_category_name])
                 category_instance = cursor.fetchone()
                 if category_instance is None:
-                    logging.error(f"Category '{event_category_name}' not found")
+                    # logging.error(f"Category '{event_category_name}' not found")
                     continue
                 
                 # Fetch location ID
                 cursor.execute('SELECT id FROM "Predictions_location" WHERE name = %s', [location_name_ticketmaster])
                 location_instance = cursor.fetchone()
                 if location_instance is None:
-                    logging.error(f"Location '{location_name_ticketmaster}' not found")
+                    # logging.error(f"Location '{location_name_ticketmaster}' not found")
                     continue
                 
                 # Check if event already exists
@@ -231,7 +234,7 @@ def main(myTimer: func.TimerRequest) -> None:
                 existing_event = cursor.fetchone()
                 
                 if existing_event:
-                    logging.info(f"{name} Event already exists")
+                    # logging.info(f"{name} Event already exists")s
                     continue
                 
                 # Bulk insert all rows for this unique combination
@@ -242,4 +245,4 @@ def main(myTimer: func.TimerRequest) -> None:
                 values = [(name, category_instance[0], location_instance[0], row['audience_type'], start_date, None if pd.isnull(row['end_date']) else row['end_date']) for _, row in group.iterrows()]
                 cursor.executemany(insert_event_query, values)
                 conn.commit()
-                logging.info(f"{name} Event created")
+                # logging.info(f"{name} Event created")
