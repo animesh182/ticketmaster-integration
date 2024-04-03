@@ -1,8 +1,4 @@
 ## Fetching events from ticketmaster and adding to our database
-----
-
-Adding a newly opened restaurant without previous sales demands that we provide some sort of dummy past sales data that would be normalized(scaled) according to the trend of the actual sales after couple of weeks or months.
-
 ---
 ## Documentation
 After getting the Api Key for Ticketmaster, we need to follow these steps inorder to import the city, venues and events into our database
