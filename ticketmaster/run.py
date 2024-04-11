@@ -21,7 +21,7 @@ def main(myTimer: func.TimerRequest) -> None:
     events_list = []
     venues_list=[]
     current_date = datetime.now()
-    end_date = current_date+ relativedelta(months=2)
+    end_date = current_date+ relativedelta(months=10)
 
     locations= [
         "Oslo","Bergen", "Stavanger", "Trondheim", "Fredrikstad",
@@ -42,7 +42,7 @@ def main(myTimer: func.TimerRequest) -> None:
 
     while current_date < end_date:
     # Calculate the start and end dates for the current month
-        start_date = current_date.strftime("%Y-%m-01")
+        start_date = current_date.strftime("%Y-%m-%d")
         next_month = current_date+ relativedelta(months=2)
         end_date_month = next_month - timedelta(days=next_month.day)
         end_date_str = end_date_month.strftime("%Y-%m-%d")
@@ -90,7 +90,6 @@ def main(myTimer: func.TimerRequest) -> None:
                     break
         # Move to the next month
         current_date = next_month
-
     df = pd.DataFrame(events_list)
     df.drop_duplicates(inplace=True)
     df['start_date'] = pd.to_datetime(df['start_date'])
@@ -239,8 +238,8 @@ def main(myTimer: func.TimerRequest) -> None:
                 
                 # Bulk insert all rows for this unique combination
                 insert_event_query = """
-                    INSERT INTO public."Events" (id, name, event_category_id, event_size, location_id, audience_type, is_sold_out, start_date, end_date) 
-                    VALUES (gen_random_uuid(), %s, %s, 'Unknown', %s, %s, FALSE, %s, %s)
+                    INSERT INTO public."Events" (id, name, event_category_id, event_size, location_id, audience_type, is_sold_out, start_date, end_date,created_at) 
+                    VALUES (gen_random_uuid(), %s, %s, 'Unknown', %s, %s, FALSE, %s, %s,CURRENT_TIMESTAMP)
                 """
                 values = [(name, category_instance[0], location_instance[0], row['audience_type'], start_date, None if pd.isnull(row['end_date']) else row['end_date']) for _, row in group.iterrows()]
                 cursor.executemany(insert_event_query, values)
