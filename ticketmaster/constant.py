@@ -32,5 +32,5 @@ prediction_location_rename_dict ={
     "Trøndelag Teater, Hovedscenen": "Trøndelag Theatre",
     "Trøndelag Teater, Studioscenen": "Trøndelag Theatre",
     "Vår Frue Kirke Trondheim": "Vår Frue Kirke",
-    "SALT, Langhuset": "Salt Langhuset"
+    "SALT, Langhuset": "Salt Langhuset",
 }
