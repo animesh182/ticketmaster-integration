@@ -21,23 +21,23 @@ def main(myTimer: func.TimerRequest) -> None:
     events_list = []
     venues_list=[]
     current_date = datetime.now()
-    end_date = current_date+ relativedelta(months=10)
+    end_date = current_date+ relativedelta(months=24)
 
     locations= [
         "Oslo","Bergen", "Stavanger", "Trondheim", "Fredrikstad",
-        "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
-        "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
-        "Hamar", "Larvik", "Halden", "Jessheim",
-        "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
-        "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
-        "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
-        "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
-        "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
-        "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
-        "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
-        "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
-        "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
-        "Sandnessjøen", "Ulsteinvik", "Stavern"
+        # "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
+        # "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
+        # "Hamar", "Larvik", "Halden", "Jessheim",
+        # "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
+        # "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
+        # "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
+        # "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
+        # "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
+        # "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
+        # "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
+        # "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
+        # "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
+        # "Sandnessjøen", "Ulsteinvik", "Stavern"
     ]
 
     while current_date < end_date:
@@ -83,7 +83,7 @@ def main(myTimer: func.TimerRequest) -> None:
                             events_list.append(event)
                     else:
                         break
-                    # logging.info(f"events found {len(events_list)} for {location} till month {end_date_str}")
+                    logging.info(f"events found {len(events_list)} for {location} till month {end_date_str}")
                     page_number += 1
                 else:
                     # print("Errors:", response.status_code)
