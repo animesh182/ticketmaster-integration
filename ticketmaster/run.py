@@ -239,9 +239,9 @@ def main(myTimer: func.TimerRequest) -> None:
                 # Bulk insert all rows for this unique combination
                 insert_event_query = """
                     INSERT INTO public."Events" (id, name, event_category_id, event_size, location_id, audience_type, is_sold_out, start_date, end_date,created_at) 
-                    VALUES (gen_random_uuid(), %s, %s, 'Unknown', %s, %s, FALSE, %s, %s,CURRENT_TIMESTAMP)
+                    VALUES (gen_random_uuid(), %s, %s, 'Unknown', %s, %s, FALSE, %s, %s,%s)
                 """
-                values = [(name, category_instance[0], location_instance[0], row['audience_type'], start_date, None if pd.isnull(row['end_date']) else row['end_date']) for _, row in group.iterrows()]
+                values = [(name, category_instance[0], location_instance[0], row['audience_type'], start_date, None if pd.isnull(row['end_date']) else row['end_date'],datetime.now()) for _, row in group.iterrows()]
                 cursor.executemany(insert_event_query, values)
                 conn.commit()
                 # logging.info(f"{name} Event created")
