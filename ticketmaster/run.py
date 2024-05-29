@@ -25,19 +25,19 @@ def main(myTimer: func.TimerRequest) -> None:
 
     locations= [
         "Oslo","Bergen", "Stavanger", "Trondheim", "Fredrikstad",
-        # "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
-        # "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
-        # "Hamar", "Larvik", "Halden", "Jessheim",
-        # "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
-        # "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
-        # "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
-        # "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
-        # "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
-        # "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
-        # "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
-        # "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
-        # "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
-        # "Sandnessjøen", "Ulsteinvik", "Stavern"
+        "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
+        "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
+        "Hamar", "Larvik", "Halden", "Jessheim",
+        "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
+        "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
+        "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
+        "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
+        "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
+        "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
+        "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
+        "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
+        "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
+        "Sandnessjøen", "Ulsteinvik", "Stavern"
     ]
 
     while current_date < end_date:
