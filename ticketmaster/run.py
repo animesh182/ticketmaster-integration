@@ -25,19 +25,19 @@ def main(myTimer: func.TimerRequest) -> None:
 
     locations= [
         "Oslo","Bergen", "Stavanger", "Trondheim", "Fredrikstad",
-        "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
-        "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
-        "Hamar", "Larvik", "Halden", "Jessheim",
-        "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
-        "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
-        "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
-        "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
-        "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
-        "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
-        "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
-        "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
-        "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
-        "Sandnessjøen", "Ulsteinvik", "Stavern"
+        # "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
+        # "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
+        # "Hamar", "Larvik", "Halden", "Jessheim",
+        # "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
+        # "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
+        # "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
+        # "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
+        # "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
+        # "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
+        # "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
+        # "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
+        # "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
+        # "Sandnessjøen", "Ulsteinvik", "Stavern"
     ]
 
     while current_date < end_date:
@@ -199,6 +199,8 @@ def main(myTimer: func.TimerRequest) -> None:
                         
     grouped_rows = transformed_df.groupby(['name', 'event_category', 'location', 'start_date'])
 
+
+    event_insert_values = []
     with psycopg2.connect(**params) as conn:
         with conn.cursor() as cursor:
             for (name, event_category_name, location_name_ticketmaster, start_date), group in grouped_rows:
@@ -232,18 +234,35 @@ def main(myTimer: func.TimerRequest) -> None:
                 cursor.execute(event_exists_query, [name, category_instance[0], location_instance[0], start_date])
                 existing_event = cursor.fetchone()
                 
-                if existing_event:
-                    # logging.info(f"{name} Event already exists")s
-                    continue
 
-                else:
-                
-                    # Bulk insert all rows for this unique combination
-                    insert_event_query = """
-                        INSERT INTO public."Events" (id, name, event_category_id, event_size, location_id, audience_type, is_sold_out, start_date, end_date,created_at) 
-                        VALUES (gen_random_uuid(), %s, %s, 'Unknown', %s, %s, FALSE, %s, %s,%s)
-                    """
-                    values = [(name, category_instance[0], location_instance[0], row['audience_type'], start_date, None if pd.isnull(row['end_date']) else row['end_date'],datetime.now()) for _, row in group.iterrows()]
-                    cursor.executemany(insert_event_query, values)
-                    conn.commit()
-                # logging.info(f"{name} Event created")
+                # if not existing_event:
+
+                #     # Bulk insert all rows for this unique combination
+                #     insert_event_query = """
+                #         INSERT INTO public."Events" (id, name, event_category_id, event_size, location_id, audience_type, is_sold_out, start_date, end_date,created_at) 
+                #         VALUES (gen_random_uuid(), %s, %s, 'Unknown', %s, %s, FALSE, %s, %s,%s)
+                #     """
+                #     values = [(name, category_instance[0], location_instance[0], row['audience_type'], start_date, None if pd.isnull(row['end_date']) else row['end_date'],datetime.now()) for _, row in group.iterrows()]
+                #     cursor.executemany(insert_event_query, values)
+                #     conn.commit()
+                # # logging.info(f"{name} Event created")
+
+
+                if not existing_event:
+                    # Prepare values for bulk insert
+                    for _, row in group.iterrows():
+                        end_date = None if pd.isnull(row['end_date']) else row['end_date']
+                        event_insert_values.append(
+                            (name, category_instance[0], location_instance[0], row['audience_type'], start_date, None if pd.isnull(row['end_date']) else row['end_date'], datetime.now())
+                        )
+
+            # Bulk insert all rows for unique combinations
+            # pd.DataFrame(event_insert_values).to_csv("test.csv")
+            if event_insert_values:
+                insert_event_query = """
+                    INSERT INTO public."Events" (id, name, event_category_id, event_size, location_id, audience_type, is_sold_out, start_date, end_date, created_at) 
+                    VALUES (gen_random_uuid(), %s, %s, 'Unknown', %s, %s, FALSE, %s, %s, %s)
+                """
+                cursor.executemany(insert_event_query, event_insert_values)
+                conn.commit()
+                logging.info(f'{len(event_insert_values)} events inserted')
