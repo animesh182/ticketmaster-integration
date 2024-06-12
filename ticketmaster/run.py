@@ -178,9 +178,10 @@ def main(myTimer: func.TimerRequest) -> None:
             for index, row in unique_locations_ticketmaster.iterrows():
                 location_name = row['location']
                 city_name = row['city']
-
+                cursor.execute('SELECT id FROM "accounts_city" WHERE name = %s', [city_name])
+                city_id = cursor.fetchone()
                 # Check if the location already exists in the database
-                cursor.execute('SELECT name FROM "Predictions_location" WHERE name = %s', [location_name])
+                cursor.execute('SELECT name FROM "Predictions_location" WHERE name = %s AND cities_id= %s', [location_name,city_id])
                 existing_location = cursor.fetchone()
 
                 if not existing_location:
