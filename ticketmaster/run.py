@@ -7,10 +7,34 @@ import requests
 import psycopg2
 from ticketmaster.params import params
 from ticketmaster.constant import prediction_location_rename_dict
+import time
 
 
 
 def main(myTimer: func.TimerRequest) -> None:
+    # def get_coordinates(address):
+    #     # url = f"https://geocode.maps.co/search?q={address}&api_key=667279b81cc09213794345bkr54c08e"
+    #     # url = f"https://nominatim.openstreetmap.org/search?addressdetails=1&q={address}&format=jsonv2&limit=1"
+    #     url = f"https://us1.locationiq.com/v1/search?key=pk.ea77c133fe66dcecd00141928451c03a&q={address}&format=json&"
+
+    #     try:
+    #         response = requests.get(url)
+    #         response.raise_for_status()  # Check if the request was successful
+    #         response_json = response.json()  # Attempt to parse JSON
+    #         if response_json:
+    #             return {
+    #                 "latitude": float(response_json[0]["lat"]),
+    #                 "longitude": float(response_json[0]["lon"])
+    #             }
+    #         else:
+    #             return None
+    #     except requests.exceptions.RequestException as e:
+    #         print(f"Request error for {address}: {e}")
+    #         return None
+    #     except ValueError as e:
+    #         print(f"JSON decode error for {address}: {e}")
+    #         return None
+
     if myTimer.past_due:
         logging.info("The timer is past due!")
 
@@ -19,25 +43,25 @@ def main(myTimer: func.TimerRequest) -> None:
     api_key = "60ZqoOTbOfCIimOeUygumt6V2fhPU4sT"
     endpoint = "https://app.ticketmaster.com/discovery/v2/events.json"
     events_list = []
-    venues_list=[]
     current_date = datetime.now()
-    end_date = current_date+ relativedelta(months=24)
+    end_date = current_date+ relativedelta(months=2)
 
     locations= [
-        "Oslo","Bergen", "Stavanger", "Trondheim", "Fredrikstad",
-        "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
-        "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
-        "Hamar", "Larvik", "Halden", "Jessheim",
-        "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
-        "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
-        "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
-        "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
-        "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
-        "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
-        "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
-        "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
-        "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
-        "Sandnessjøen", "Ulsteinvik", "Stavern"
+        "Oslo"
+        # ,"Bergen", "Stavanger", "Trondheim", "Fredrikstad",
+        # "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
+        # "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
+        # "Hamar", "Larvik", "Halden", "Jessheim",
+        # "Kongsberg", "Molde", "Harstad", "Lillehammer", "Ski",
+        # "Horten", "Gjøvik", "Mo i Rana", "Kristiansund", "Hønefoss",
+        # "Alta", "Elverum", "Askim", "Leirvik", "Osøyro",
+        # "Narvik", "Grimstad", "Drøbak", "Nesoddtangen", "Steinkjer",
+        # "Bryne", "Kongsvinger", "Egersund", "Brumunddal", "Mandal",
+        # "Ås", "Førde", "Levanger", "Arna", "Mosjøen",
+        # "Notodden", "Florø", "Namsos", "Lillesand", "Holmestrand",
+        # "Raufoss", "Hammerfest", "Ørsta", "Melhus", "Volda",
+        # "Eidsvoll", "Knarvik", "Spydeberg", "Fauske", "Flekkefjord",
+        # "Sandnessjøen", "Ulsteinvik", "Stavern"
     ]
 
     while current_date < end_date:
@@ -71,6 +95,8 @@ def main(myTimer: func.TimerRequest) -> None:
                         total_pages = json_data.get("page", {}).get("totalPages")
                         for event_data in events_data:
                             venue_name = event_data.get("_embedded", {}).get("venues", [])[0].get("name")
+                            longitude = event_data.get("_embedded", {}).get("venues", [])[0]["location"]["longitude"]
+                            latitude = event_data.get("_embedded", {}).get("venues", [])[0]["location"]["latitude"]
                             audience_type = "Under 18, 18-30, 30-45, 45-60, 60+" if (event_data.get("classifications", [])[0].get("family") == "true" ) else "18-30, 30-45, 45-60, 60+"
                             event = {
                                 "city": location,
@@ -79,6 +105,8 @@ def main(myTimer: func.TimerRequest) -> None:
                                 "name": event_data.get("name", ""),
                                 "start_date": event_data.get("dates", {}).get("start", {}).get("localDate"),
                                 "audience_type": audience_type,
+                                "latitude":latitude,
+                                "longitude": longitude
                             }
                             events_list.append(event)
                     else:
@@ -101,13 +129,15 @@ def main(myTimer: func.TimerRequest) -> None:
 
     df_sorted['group'] = (df_sorted['start_date'] - df_sorted['start_date'].shift(1)).dt.days.ne(1).cumsum()
     # Step 4: Group by the newly created 'group' and aggregate to get the start and end dates
-    transformed_df = df_sorted.groupby(['city', 'event_category', 'location', 'name','audience_type', 'group']).agg(
+    transformed_df = df_sorted.groupby(['city', 'event_category', 'location', 'name','audience_type','latitude','longitude', 'group']).agg(
                                                                                                         city =('city', 'first'),
                                                                                                         event_category =('event_category', 'first'),
                                                                                                         location =('location', 'first'),
                                                                                                         name =('name', 'first'),
                                                                                                         start_date=('start_date', 'first'),
                                                                                                         end_date=('start_date', 'last'),
+                                                                                                        latitude=('latitude', 'first'),
+                                                                                                        longitude=('longitude', 'first'),
                                                                                                         audience_type=('audience_type', 'first')
                                                                                                         ).reset_index(drop=True)
     transformed_df.loc[transformed_df['start_date'] == transformed_df['end_date'],'end_date']= None
@@ -116,6 +146,8 @@ def main(myTimer: func.TimerRequest) -> None:
     transformed_df['location'] = transformed_df['location'].apply(lambda x: prediction_location_rename_dict.get(x, x))
     transformed_df['name'] = transformed_df['name'].apply(lambda x: x[:50])
 
+    location_coordinates = transformed_df[['city', 'location', 'latitude','longitude']].drop_duplicates()
+    # location_coordinates.to_csv('location_coordinates.csv')
     
 
 # add city if not already in our database ------------------------------------------------------------------------------------------
@@ -171,35 +203,41 @@ def main(myTimer: func.TimerRequest) -> None:
             columns = [col[0] for col in cursor.description]
             all_locations = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-    unique_locations_ticketmaster = transformed_df[['city', 'location']].drop_duplicates()
+    unique_locations_ticketmaster = transformed_df[['city', 'location','latitude','longitude']].drop_duplicates()
+
+
 
     with psycopg2.connect(**params) as conn:
         with conn.cursor() as cursor:
             for index, row in unique_locations_ticketmaster.iterrows():
                 location_name = row['location']
                 city_name = row['city']
+                latitude= row['latitude']
+                longitude= row['longitude']
                 cursor.execute('SELECT id FROM "accounts_city" WHERE name = %s', [city_name])
                 city_id = cursor.fetchone()
                 # Check if the location already exists in the database
                 cursor.execute('SELECT name FROM "Predictions_location" WHERE name = %s AND cities_id= %s', [location_name,city_id])
                 existing_location = cursor.fetchone()
-
+                if existing_location:
+                    cursor.execute('UPDATE public."Predictions_location" SET latitude=%s, longitude=%s, created_at = %s where latitude is null and longitude is null and cities_id=%s and name=%s',
+                                   [latitude,longitude,datetime.now(),city_id,location_name])
+                    # logging.info(f'updated {location_name} with lat: {latitude} and long: {longitude}')
                 if not existing_location:
                     cursor.execute('SELECT id FROM public."accounts_city" WHERE name = %s', [city_name])
                     city_id = cursor.fetchone()
 
                     if city_id:
-                        cursor.execute('INSERT INTO public."Predictions_location" (id, name, cities_id, created_at) VALUES (gen_random_uuid(), %s, %s, %s)',
-                                    [location_name, city_id[0], datetime.now()])
+                        cursor.execute('INSERT INTO public."Predictions_location" (id, name, cities_id, created_at,latitude,longitude) VALUES (gen_random_uuid(), %s, %s, %s,%s,%s)',
+                                    [location_name, city_id[0], datetime.now(),latitude, longitude])
                         logging.info(f"Location created: {location_name}")
                     else:
                         logging.info(f"City '{city_name}' does not exist. Skipping location creation for {location_name}")
                 else:
                 #     logging.info(f"Location '{location_name}' already exists.")
                     continue
-                        
+     
     grouped_rows = transformed_df.groupby(['name', 'event_category', 'location', 'start_date'])
-
 
     event_insert_values = []
     with psycopg2.connect(**params) as conn:
@@ -267,3 +305,36 @@ def main(myTimer: func.TimerRequest) -> None:
                 cursor.executemany(insert_event_query, event_insert_values)
                 conn.commit()
                 logging.info(f'{len(event_insert_values)} events inserted')
+
+    # update existing locations
+    # with psycopg2.connect(**params) as conn:
+    #     with conn.cursor() as cursor:
+    #         new_df = pd.read_csv('final_test.csv')
+    #         for index,row in new_df.iterrows():
+    #             cursor.execute('UPDATE public."Predictions_location" SET latitude=%s, longitude=%s where latitude is null and longitude is null and name=%s',
+    #                                 [row['latitude'],row['longitude'],row['index']])
+    #             conn.commit()
+
+#search locations with no coordinates
+
+    # with psycopg2.connect(**params) as conn:
+    #     with conn.cursor() as cursor:
+    #         without_coordinates_query ='SELECT pl.name as location ,ac.name as city FROM "Predictions_location" pl JOIN accounts_city ac on pl.cities_id = ac.id where pl.latitude is null' 
+    #         # locations_without_coordinates = cursor.fetchall()
+    #         cursor.execute(without_coordinates_query)
+    #         conn.commit()
+    #         columns = [col[0] for col in cursor.description]
+    #         locations_without_coordinates = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    #         no_coordinates_df = pd.DataFrame(locations_without_coordinates)
+    #         logging.info(len(no_coordinates_df))
+    #         place_coords= {}
+    #         for index,row in no_coordinates_df.iterrows():
+    #             coords = get_coordinates(f'{row["location"]},{row["city"]},norway')
+    #             logging.info(f"{row['location']}, corordinates are {coords}")
+    #             if coords:
+    #                 place_coords[row['location']] = coords
+    #             time.sleep(1)
+
+    #         df = pd.DataFrame.from_dict(place_coords, orient='index')
+    #         df.reset_index(inplace=True)
+    #         df.to_csv("final_test.csv")
