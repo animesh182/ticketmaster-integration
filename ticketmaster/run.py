@@ -44,11 +44,11 @@ def main(myTimer: func.TimerRequest) -> None:
     endpoint = "https://app.ticketmaster.com/discovery/v2/events.json"
     events_list = []
     current_date = datetime.now()
-    end_date = current_date+ relativedelta(months=2)
+    end_date = current_date+ relativedelta(months=6)
 
     locations= [
         "Oslo"
-        # ,"Bergen", "Stavanger", "Trondheim", "Fredrikstad",
+        ,"Bergen", "Stavanger", "Trondheim", "Fredrikstad",
         # "Drammen", "Skien", "Kristiansand", "Ålesund", "Tønsberg",
         # "Moss", "Sandefjord", "Haugesund", "Arendal", "Bodø","Tromsø", 
         # "Hamar", "Larvik", "Halden", "Jessheim",
@@ -305,7 +305,32 @@ def main(myTimer: func.TimerRequest) -> None:
                 cursor.executemany(insert_event_query, event_insert_values)
                 conn.commit()
                 logging.info(f'{len(event_insert_values)} events inserted')
+    
+    city_restaurant_pairs = {
+    'Oslo': 'Oslo Torggata',
+    'Fredrikstad': 'Fredrikstad',
+    'Bergen': 'Bergen',
+    'Stavanger': 'Stavanger',
+    'Trondheim': 'Trondheim'
+    }
 
+    with psycopg2.connect(**params) as conn:
+        with conn.cursor() as cursor:
+            for city, restaurant in city_restaurant_pairs.items():
+                query = f"""
+                        INSERT INTO public."Events_restaurants" (events_id, restaurant_id)
+                        SELECT e.id AS events_id, ar.id AS restaurant_id
+                        FROM public."Events" e
+                        JOIN public."Predictions_location" pl ON e.location_id = pl.id
+                        JOIN public."accounts_city" ac ON pl.cities_id = ac.id
+                        JOIN public.accounts_restaurant ar ON ar.city = ac.name
+                        WHERE ac.name = '{city}' AND ar.name = '{restaurant}'
+                        ON CONFLICT (events_id, restaurant_id) DO NOTHING;
+                    """
+                cursor.execute(query)
+                inserted_count = cursor.rowcount
+                logging.info(f"Inserted {inserted_count} event(s) for city: '{city}' and restaurant: '{restaurant}'.")
+                conn.commit()
     # update existing locations
     # with psycopg2.connect(**params) as conn:
     #     with conn.cursor() as cursor:
